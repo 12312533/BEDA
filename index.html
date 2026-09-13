@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#FF1493">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+<!-- Ikon Aplikasi khusus layar iPhone -->
+<link rel="apple-touch-icon" href="omak.jpeg">
+
+<!-- Menghilangkan URL bar Safari agar aplikasi tampil Full Screen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- Mengatur warna bar baterai/sinyal di atas layar (bisa 'default', 'black', atau 'black-translucent') -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<!-- Nama aplikasi yang akan muncul di bawah ikon HP iPhone -->
+<meta name="apple-mobile-web-app-title" content="Diet Syakira">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Kalori Ajaib ✨</title>
+    <!-- CDN Supabase diposisikan paling atas di head -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 3D Floating Visuals -->
+    <div class="decorations" aria-hidden="true">
+        <div class="float-item heart"></div>
+        <div class="float-item bubble bubble-1"></div>
+        <div class="float-item strawberry"></div>
+        <div class="float-item apple"></div>
+        <div class="float-item sparkle"></div>
+        <div class="float-item dumbbell"></div>
+        <div class="float-item bubble bubble-2">🫧</div>
+    </div>
+
+    <!-- Header / Hero Section -->
+    <header class="hero">
+        <div class="hero-content">
+            <h1>KALKULATOR KALORI AJAIB</h1>
+            <div class="badge-pill">DIET ROAD SYAKIRA 54 To 45</div>
+            
+            <!-- Kotak Connect Code Supabase -->
+            <div class="connect-code-box glass-panel" style="margin-top: 1.5rem; padding: 1rem; display: inline-block; background: rgba(255,255,255,0.7);">
+                <p style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.3rem;">CONNECT DENGAN COACH 💗</p>
+                <div style="font-family: 'Fredoka', sans-serif; font-size: 1.3rem; color: var(--deep-pink);" id="displayConnectCode">
+                    MEMUAT KODE...
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-coach">
+            <div class="coach-card glass-panel">
+                <img src="MAS COACH.jpeg" alt="Coach Mas Anang" class="coach-photo" id="coachPhoto">
+                <h3>COACH MAS ANANG</h3>
+                <p>Siap pantau kalori Bebee! </p>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Target Harian -->
+        <section class="target-section glass-panel">
+            <h2>TARGET HARIAN/1200-1400 Kal</h2>
+            <div class="progress-wrapper">
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="progress-text" id="progressText">0 / 1200 KCAL</div>
+            </div>
+        </section>
+
+        <!-- Main Layout (2 Columns on Desktop) -->
+        <div class="grid-layout">
+            <!-- Left: Kalkulator -->
+            <section class="calculator-section glass-panel">
+                <h2>Hitung Kalori Makananmu </h2>
+                
+                <div class="form-group">
+                    <label for="foodInput">Jenis makanan atau minuman</label>
+                    <div class="autocomplete-wrapper">
+                        <input type="text" id="foodInput" placeholder="Contoh: nasi putih, ayam goreng, kopi susu..." autocomplete="off">
+                        <ul id="suggestionList" class="suggestions hidden"></ul>
+                    </div>
+                </div>
+
+                <div class="form-group weight-group">
+                    <div class="input-half">
+                        <label for="weightInput">Berat / porsi</label>
+                        <input type="number" id="weightInput" placeholder="0" min="1">
+                    </div>
+                    <div class="input-half">
+                        <label for="unitSelect">&nbsp;</label>
+                        <select id="unitSelect">
+                            <option value="gram">gram</option>
+                            <option value="ml">ml</option>
+                            <option value="porsi">porsi</option>
+                            <option value="buah">buah</option>
+                            <option value="potong">potong</option>
+                            <option value="gelas">gelas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <p class="disclaimer">* Estimasi kalori berdasarkan database nutrisi. Kalori aktual dapat berbeda karena bahan, resep, atau merek.</p>
+
+                <button id="btnHitung" class="btn-primary">HITUNG KALORI </button>
+
+                <!-- Hasil Kalkulasi (Hidden by default) -->
+                <div id="resultCard" class="result-card hidden">
+                    <h3>HASIL KALORI</h3>
+                    <div class="result-content">
+                        <div class="result-detail">
+                            <span id="resFoodName">Nasi Putih</span>
+                            <span id="resFoodWeight">200 gram</span>
+                        </div>
+                        <div class="result-kcal">
+                            <span id="resFoodKcal">260</span> KCAL
+                        </div>
+                    </div>
+                    <button id="btnPrepareInput" class="btn-secondary">+ INPUT KE HARI INI</button>
+                </div>
+            </section>
+
+            <!-- Right: Makanan Hari Ini -->
+            <section class="today-section glass-panel">
+                <h2>MAKANAN HARI INI 🍽️</h2>
+                <h3 id="displaySelectedDate" class="date-subtitle">Memuat tanggal...</h3>
+                
+                <div class="food-list-container" id="foodListContainer">
+                    <p class="empty-state">Belum ada makanan dicatat hari ini </p>
+                </div>
+
+                <div class="total-summary">
+                    <span>TOTAL:</span>
+                    <span class="total-number" id="summaryTotalKcal">0 KCAL</span>
+                </div>
+
+                <button id="btnResetToday" class="btn-outline">RESET HARI INI 🔄</button>
+            </section>
+        </div>
+
+        <div class="grid-layout bottom-grid">
+            <!-- Kalender History -->
+            <section class="calendar-section glass-panel">
+                <h2>KALENDER KALORI </h2>
+                <div class="calendar-header">
+                    <button id="btnPrevMonth" aria-label="Previous Month"><i class="fas fa-chevron-left"></i></button>
+                    <h3 id="monthYearDisplay">September 2026</h3>
+                    <button id="btnNextMonth" aria-label="Next Month"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="calendar-days-header">
+                    <span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span>
+                </div>
+                <div id="calendarGrid" class="calendar-grid"></div>
+            </section>
+
+            <!-- Progress Berat Badan -->
+            <section class="weight-section glass-panel">
+                <h2>PROGRESS BERAT BADAN </h2>
+                <p class="info-text">Input berat badan dilakukan setiap hari Minggu yaa </p>
+                
+                <div class="weight-input-wrapper">
+                    <input type="number" id="weightVal" placeholder="0.0" step="0.1">
+                    <span class="unit-label">kg</span>
+                    <button id="btnSaveWeight" class="btn-primary btn-small">SIMPAN</button>
+                </div>
+                <p id="weightStatusMsg" class="status-msg"></p>
+
+                <div class="weight-history">
+                    <h3>Riwayat Mingguan:</h3>
+                    <ul id="weightHistoryList"></ul>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Motivation Section -->
+    <section class="motivation-section">
+        <h1 class="bounce-text">SEMANGAT SAYANGKUU<br>DIETNYAAA MUAHMUAH</h1>
+    </section>
+
+    <!-- Modals -->
+    <div id="cameraModal" class="modal-overlay hidden">
+        <div class="modal-card glass-panel">
+            <div id="camStep1" class="cam-step active">
+                <div class="modal-icon"><i class="fas fa-camera"></i></div>
+                <h2> FOTO GRAMASI MAKANAN</h2>
+                <p>Foto gramasi diperlukan untuk mencatat makananmu dan membantu Coach Anang memantau progress diet.</p>
+                <div class="modal-actions">
+                    <button id="btnAllowCamera" class="btn-primary">GASS FOTO</button>
+                    <button class="btn-cancel btn-close-modal">BATAL</button>
+                </div>
+            </div>
+            <div id="camStep2" class="cam-step hidden">
+                <h2>LIVE CAMERA</h2>
+                <div class="video-container">
+                    <video id="liveVideo" autoplay playsinline></video>
+                    <button id="btnSwitchCamUser" style="margin-top: 10px; padding: 8px; border-radius: 8px; background: #FF1493; color: white; border: none; cursor: pointer;">🔄 Putar Kamera</button>
+                </div>
+                <div class="modal-actions">
+                    <button id="btnCapturePhoto" class="btn-primary"><i class="fas fa-camera"></i> Pap Menu</button>
+                    <button class="btn-cancel btn-close-modal">BATAL</button>
+                </div>
+            </div>
+
+            <div id="camStep3" class="cam-step hidden">
+                <h2>PREVIEW FOTO GRAMASI</h2>
+                <div class="video-container">
+                    <canvas id="photoCanvas"></canvas>
+                </div>
+                <div class="modal-actions row-actions">
+                    <button id="btnRetakePhoto" class="btn-secondary">Ulang ah</button>
+                    <button id="btnUsePhoto" class="btn-primary">Dah Kirim</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="warningModal" class="modal-overlay hidden">
+        <div class="modal-card glass-panel warning-card">
+            <img src="mas a marah.png" alt="Coach Warning" class="warning-img">
+            <h2>KALORINYA KELEBIHAN SAYANGGKUU!!! 😭</h2>
+            <p>Malam makan bayem aja bayem </p>
+            <button id="btnAcknowledgeWarning" class="btn-primary">OKE COACH 🥹</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden">BERHASIL DIINPUT!!</div>
+
+    <script src="script.js"></script>
+</body>
+</html>
